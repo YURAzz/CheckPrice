@@ -23,7 +23,6 @@ public class App {
     Set errorSet = new HashSet();
     HashMap resolutionPrices = new HashMap();
     CachedXPathAPI v = new CachedXPathAPI();
-    Integer i = 0;
 
     String schedulationPath = "/content/group/definition/list[@name='schedulations']/value/schedulation";
     String EstDto = "./group/definition/taxonomylink/value/@descr";
@@ -32,44 +31,37 @@ public class App {
     String idPath = "./list/value/fruition/taxonomylink[@name='toPriceTax']/value/ti/@id ";
 
     try {
+      NodeList schedulationList = v.selectNodeList(doc, schedulationPath);
 
-        NodeList schedulationList = v.selectNodeList(doc, schedulationPath);
-        
-        for (i = 0; i < schedulationList.getLength(); i++) {
-          
-          NodeList fruitionNodes = v.selectNodeList(schedulationList.item(i), fruitionPath);
-          NodeList estDto = v.selectNodeList(schedulationList.item(i), EstDto);
-          String currentType = estDto.item(0).getTextContent();
+      for (int i = 0; i < schedulationList.getLength(); i++) {
+        NodeList fruitionNodes = v.selectNodeList(schedulationList.item(i), fruitionPath);
+        NodeList estDto = v.selectNodeList(schedulationList.item(i), EstDto);
+        String currentType = estDto.item(0).getTextContent();
 
-          if (currentType.equals("DTO") || currentType.equals("EST")) {
+        if (currentType.equals("DTO") || currentType.equals("EST")) {
 
-          for (int k = 0; k < fruitionNodes.getLength(); k++){
+          for (int k = 0; k < fruitionNodes.getLength(); k++) {
+            NodeList path = v.selectNodeList(schedulationList.item(i), labelPath);
+            NodeList ids = v.selectNodeList(schedulationList.item(i), idPath);
+            String currentKey = path.item(k).getTextContent();
+            String currentId = ids.item(k).getTextContent();
 
-                  NodeList path = v.selectNodeList(schedulationList.item(i), labelPath);
-                  NodeList ids = v.selectNodeList(schedulationList.item(i), idPath);
-                  String currentKey = path.item(k).getTextContent();
-                  String currentId = ids.item(k).getTextContent();
+            if (resolutionPrices.containsKey(currentKey)) {
+              String check = resolutionPrices.get(currentKey).toString();
 
-                  if (resolutionPrices.containsKey(currentKey))
-                  {
-                    String check = resolutionPrices.get(currentKey).toString();
-
-                    if (check.equals(currentId))
-                    {}
-                    else
-                    {
-                      errorSet.add("Per la quality "+ currentKey + " di fruition " + currentType + 
-                      " sono presenti price category differenti, currentKey mismatch: " + check + " " + currentId );
-                    }
-                  }
-                  else
-                  resolutionPrices.put(currentKey, currentId);
-            }
+              if (check.equals(currentId)) {
+              } else {
+                errorSet.add("Per la quality " + currentKey + " di fruition " + currentType +
+                    " sono presenti price category differenti, currentKey mismatch: " + check + " " + currentId);
+              }
+            } else
+              resolutionPrices.put(currentKey, currentId);
           }
         }
-    } catch (TransformerException e) {
-        e.printStackTrace();
       }
+    } catch (TransformerException e) {
+      e.printStackTrace();
+    }
     return doc;
   }
 }
